@@ -13,14 +13,17 @@ extern int yylineno;
 
 %}
 
-%left '+' '-'
-%left OR NOR XOR XNOR
-%left AND NAND
-
+%left EXP ABS NOT
+%left '*' '/' MOD REM
+ /* TODO: unary */ /* %left '+' '-' */
+%left '+' '-' '&'
+%left SLL SRL SLA  SRA  ROL  ROR  
+%left '=' NEQ '<' LTEQ  '>' GTEQ 
+%left AND  OR NAND NOR  XOR  XNOR 
 
 %start  root
 
-%token  IDENT NUMBER STRING
+%token  IDENT NUMBER STRING DIGIT
 %token  LTEQ EQGT
 %token  NOT AND NAND OR NOR XOR XNOR
 %token  USE LIBRARY ENTITY ARCHITECTURE
@@ -93,19 +96,16 @@ attribute_list  : /* empty */
                 | attribute_list attribute
                 ;
 
-attribute   : ATTRIBUTE IDENT OF IDENT ':' entity_or_signal IS ident_or_literal ';'
+attribute   : ATTRIBUTE IDENT OF IDENT ':' entity_or_signal IS expr ';'
             ;
 
 entity_or_signal    : ENTITY
                     | SIGNAL
                     ; 
 
-ident_or_literal    : IDENT
-                    | literal
-                    ;
-
 literal :   STRING
         |   NUMBER
+        |   DIGIT
         ;
 
 port_list_opt   : /* empty */
@@ -152,13 +152,11 @@ ident_period_list   : IDENT
 
 /* TODO: function invocation */
 /* TODO: verify that the prec used with unary_op is correct */
-expr    : term
-        | expr binop term
-        | unary_op expr %prec AND
-        ;
-
-term    : literal
+expr    : literal
         | signal_opt_vector
+        | expr binop expr
+        | unary_op expr %prec AND
+        | '(' expr')'
         ;
 
 unary_op    : NOT
@@ -173,6 +171,12 @@ binop : OR
       | '+'
       | '-'
       | '='
+      | NEQ
+      | '&'
+      | '>'
+      | '<'
+      | GTEQ
+      | LTEQ
       ;
 
 /* TODO: allow for typedefs */
@@ -185,5 +189,5 @@ type_specifier  : STD_ULOGIC
 
 void yyerror(const char *s)
 {
-    fprintf(stderr, "%s\n", s);
+    fprintf(stderr, "%d: %s\n", yylineno, s);
 }
