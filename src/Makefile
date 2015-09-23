@@ -1,7 +1,7 @@
 .PHONY: clean
 
 all:
-	yacc -d vhdl.yacc
+	yacc -d -v vhdl.yacc
 	lex vhdl.lex
 	g++ -o rtlp main.cpp y.tab.c lex.yy.c
 
